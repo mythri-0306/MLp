@@ -5,6 +5,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from sklearn.base import BaseEstimator, RegressorMixin
 from sklearn.linear_model import Lasso, LinearRegression, Ridge
 from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.model_selection import GridSearchCV, train_test_split
@@ -13,28 +14,48 @@ from sklearn.preprocessing import PolynomialFeatures, StandardScaler
 
 
 ROOT = Path(__file__).resolve().parent
-DATA_PATH = ROOT / "real-estate" / "Real estate valuation data set.xlsx"
 OUTPUT_DIR = ROOT / "outputs" / "regression"
 
 
-class GradientDescentLinearRegression:
+def get_data_path():
+    candidates = [
+        ROOT / "datasets" / "real estate" / "Real estate valuation data set.xlsx",
+        ROOT / "real-estate" / "Real estate valuation data set.xlsx",
+        ROOT.parent / "datasets" / "real estate" / "Real estate valuation data set.xlsx",
+        ROOT.parent / "real-estate" / "Real estate valuation data set.xlsx",
+        Path("datasets/real estate/Real estate valuation data set.xlsx"),
+        Path("real-estate/Real estate valuation data set.xlsx"),
+    ]
+    for p in candidates:
+        if p.exists():
+            return p
+    return ROOT / "real-estate" / "Real estate valuation data set.xlsx"
+
+
+DATA_PATH = get_data_path()
+
+
+class GradientDescentLinearRegression(RegressorMixin, BaseEstimator):
     def __init__(self, learning_rate=0.03, epochs=5000):
         self.learning_rate = learning_rate
         self.epochs = epochs
-        self.loss_history = []
 
     def fit(self, X, y):
-        X_with_intercept = np.column_stack([np.ones(len(X)), X])
-        self.weights = np.zeros(X_with_intercept.shape[1])
+        X_arr = np.asarray(X, dtype=float)
+        y_arr = np.asarray(y, dtype=float)
+        X_with_intercept = np.column_stack([np.ones(len(X_arr)), X_arr])
+        self.weights_ = np.zeros(X_with_intercept.shape[1])
+        self.loss_history_ = []
         for _ in range(self.epochs):
-            errors = X_with_intercept @ self.weights - y
-            gradient = (2 / len(X)) * (X_with_intercept.T @ errors)
-            self.weights -= self.learning_rate * gradient
-            self.loss_history.append(float(np.mean(errors ** 2)))
+            errors = X_with_intercept @ self.weights_ - y_arr
+            gradient = (2 / len(X_arr)) * (X_with_intercept.T @ errors)
+            self.weights_ -= self.learning_rate * gradient
+            self.loss_history_.append(float(np.mean(errors ** 2)))
         return self
 
     def predict(self, X):
-        return np.column_stack([np.ones(len(X)), X]) @ self.weights
+        X_arr = np.asarray(X, dtype=float)
+        return np.column_stack([np.ones(len(X_arr)), X_arr]) @ self.weights_
 
 
 def load_data():
@@ -124,7 +145,8 @@ def main():
 
     gd_inner = gd_model.named_steps["model"]
     figure, axis = plt.subplots(figsize=(7, 5))
-    axis.plot(gd_inner.loss_history)
+    loss_data = getattr(gd_inner, "loss_history_", getattr(gd_inner, "loss_history", []))
+    axis.plot(loss_data)
     axis.set(title="Gradient-descent training loss", xlabel="Epoch", ylabel="MSE")
     figure.tight_layout()
     figure.savefig(OUTPUT_DIR / "gradient_descent_loss.png", dpi=160)

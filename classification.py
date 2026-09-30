@@ -23,8 +23,25 @@ from sklearn.tree import DecisionTreeClassifier
 
 
 ROOT = Path(__file__).resolve().parent
-DATA_PATH = ROOT / "breast-cancer" / "wdbc.data"
 OUTPUT_DIR = ROOT / "outputs" / "classification"
+
+
+def get_data_path():
+    candidates = [
+        ROOT / "datasets" / "cancer dataset" / "wdbc.data",
+        ROOT / "breast-cancer" / "wdbc.data",
+        ROOT.parent / "datasets" / "cancer dataset" / "wdbc.data",
+        ROOT.parent / "breast-cancer" / "wdbc.data",
+        Path("datasets/cancer dataset/wdbc.data"),
+        Path("breast-cancer/wdbc.data"),
+    ]
+    for p in candidates:
+        if p.exists():
+            return p
+    return ROOT / "breast-cancer" / "wdbc.data"
+
+
+DATA_PATH = get_data_path()
 
 
 def load_data():
@@ -93,7 +110,7 @@ def main():
             n_jobs=-1,
         ),
         "rbf_svm": GridSearchCV(
-            Pipeline([("scale", StandardScaler()), ("model", SVC(kernel="rbf"))]),
+            Pipeline([("scale", StandardScaler()), ("model", SVC(kernel="rbf", probability=True, random_state=42))]),
             {
                 "model__C": [0.1, 1, 10, 100],
                 "model__gamma": ["scale", "auto", 0.01, 0.1],
@@ -109,7 +126,13 @@ def main():
     for name, search in searches.items():
         search.fit(X_train, y_train)
         predictions = search.predict(X_test)
-        scores = search.predict_proba(X_test)[:, 1] if hasattr(search, "predict_proba") else search.decision_function(X_test)
+        if hasattr(search, "predict_proba"):
+            try:
+                scores = search.predict_proba(X_test)[:, 1]
+            except Exception:
+                scores = search.decision_function(X_test)
+        else:
+            scores = search.decision_function(X_test)
         matrix = confusion_matrix(y_test, predictions)
         metrics.append({
             "model": name,

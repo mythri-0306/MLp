@@ -8,8 +8,25 @@ import pandas as pd
 
 
 ROOT = Path(__file__).resolve().parent
-DATA_PATH = ROOT / "wholesale-customers" / "Wholesale customers data.csv"
 OUTPUT_DIR = ROOT / "outputs" / "kmeans"
+
+
+def get_data_path():
+    candidates = [
+        ROOT / "datasets" / "whole sale customer" / "Wholesale customers data.csv",
+        ROOT / "wholesale-customers" / "Wholesale customers data.csv",
+        ROOT.parent / "datasets" / "whole sale customer" / "Wholesale customers data.csv",
+        ROOT.parent / "wholesale-customers" / "Wholesale customers data.csv",
+        Path("datasets/whole sale customer/Wholesale customers data.csv"),
+        Path("wholesale-customers/Wholesale customers data.csv"),
+    ]
+    for p in candidates:
+        if p.exists():
+            return p
+    return ROOT / "wholesale-customers" / "Wholesale customers data.csv"
+
+
+DATA_PATH = get_data_path()
 FEATURES = ["Fresh", "Milk", "Grocery", "Frozen", "Detergents_Paper", "Delicassen"]
 
 
