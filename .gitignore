@@ -1,4 +1,8 @@
-__pycache__
-breast-cancer
-real-estate
-wholesale-customers
+__pycache__/
+.venv/
+outputs/
+datasets/
+breast-cancer/
+real-estate/
+wholesale-customers/
+*.zip
