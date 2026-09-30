@@ -5,6 +5,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from sklearn.base import BaseEstimator, RegressorMixin
 from sklearn.linear_model import Lasso, LinearRegression, Ridge
 from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.model_selection import GridSearchCV, train_test_split
@@ -17,7 +18,7 @@ DATA_PATH = ROOT / "real-estate" / "Real estate valuation data set.xlsx"
 OUTPUT_DIR = ROOT / "outputs" / "regression"
 
 
-class GradientDescentLinearRegression:
+class GradientDescentLinearRegression(RegressorMixin, BaseEstimator):
     def __init__(self, learning_rate=0.03, epochs=5000):
         self.learning_rate = learning_rate
         self.epochs = epochs
@@ -25,16 +26,16 @@ class GradientDescentLinearRegression:
 
     def fit(self, X, y):
         X_with_intercept = np.column_stack([np.ones(len(X)), X])
-        self.weights = np.zeros(X_with_intercept.shape[1])
+        self.weights_ = np.zeros(X_with_intercept.shape[1])
         for _ in range(self.epochs):
-            errors = X_with_intercept @ self.weights - y
+            errors = X_with_intercept @ self.weights_ - y
             gradient = (2 / len(X)) * (X_with_intercept.T @ errors)
-            self.weights -= self.learning_rate * gradient
+            self.weights_ -= self.learning_rate * gradient
             self.loss_history.append(float(np.mean(errors ** 2)))
         return self
 
     def predict(self, X):
-        return np.column_stack([np.ones(len(X)), X]) @ self.weights
+        return np.column_stack([np.ones(len(X)), X]) @ self.weights_
 
 
 def load_data():
