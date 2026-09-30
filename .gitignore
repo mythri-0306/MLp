@@ -1,4 +1,9 @@
-__pycache__
-breast-cancer
-real-estate
-wholesale-customers
+.venv
+__pycache__/
+outputs/
+breast-cancer/
+real-estate/
+wholesale-customer/
+
+classification.py
+kmeans.py
