@@ -4,5 +4,5 @@ outputs/
 datasets/
 breast-cancer/
 real-estate/
-wholesale-customers/
-*.zip
+wholesale-customer/
+
